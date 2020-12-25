@@ -1,6 +1,14 @@
+import torchvision.transforms as transforms
+import torchvision
+from torch.utils.data import DataLoader
+
+batch_size = 32
+PATH="./datasets/"
+
+
 class CustomRotation(object):
-      def __call__(self, image):
-    return image.transpose(0, 2).transpose(0, 1)
+    def __call__(self, image):
+        return image.transpose(0, 2).transpose(0, 1)
 
 
 class NoisySBDataset():

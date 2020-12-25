@@ -1,3 +1,43 @@
+#import torchvision.datasets.SBDataset as sbd
+from utils.models import *
+from utils.tools import *
+
+import torch
+import torch.nn.functional as F
+
+
+import torch.nn as nn
+import torch.nn.parallel
+import torch.backends.cudnn as cudnn
+import torch.optim
+import torch.utils.data
+import torchvision.transforms as transforms
+import torchvision.datasets as datasets
+
+from collections import namedtuple
+from itertools import count
+from PIL import Image
+import torch.optim as optim
+import cv2 as cv
+from torch.autograd import Variable
+
+try:
+    if 'google.colab' in str(get_ipython()):
+        from google.colab import drive
+        drive.mount('/content/gdrive')
+        LOAD = True
+        SAVE_MODEL_PATH = '/content/gdrive/MyDrive/models/' + 'q_network'
+    else:
+        LOAD = False
+        SAVE_MODEL_PATH = "./models/q_network"
+except NameError:
+        LOAD = False
+        SAVE_MODEL_PATH = "./models/q_network"
+
+
+
+
+
 use_cuda = True
 FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
 LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
@@ -84,7 +124,7 @@ class Agent():
     def load_network(self):
         if not use_cuda:
             return torch.load(self.save_path+"_"+self.classe, map_location=torch.device('cpu'))
-        return torch.load(self.save_path)
+        return torch.load(self.save_path+"_"+self.classe)
 
     def intersection_over_union(self, box1, box2):
         # ymin, xmin, ymax, xmax = box
@@ -92,11 +132,6 @@ class Agent():
         x11, x21, y11, y21 = box1
         x12, x22, y12, y22 = box2
         
-        """        
-        y11, x11, y21, x21 = box1
-        y12, x12, y22, x22 = box2
-        """
-
         yi1 = max(y11, y12)
         xi1 = max(x11, x12)
         yi2 = min(y21, y22)
@@ -188,6 +223,21 @@ class Agent():
         else:
           #return np.random.randint(0,9)
             return self.get_best_next_action(actions, ground_truth)
+
+    def select_action_model(self, state):
+        with torch.no_grad():
+                if use_cuda:
+                    inpu = Variable(state).cuda()
+                else:
+                    inpu = Variable(state)
+                qval = self.policy_net(inpu)
+                _, predicted = torch.max(qval.data,1)
+                action = predicted[0] # + 1
+                try:
+                  return action.cpu().numpy()[0]
+                except:
+                  return action.cpu().numpy()
+
 
     def optimize_model(self):
         if len(self.memory) < self.BATCH_SIZE:
@@ -289,6 +339,58 @@ class Agent():
         real_x_min, real_x_max, real_y_min, real_y_max = int(self.rewrap(real_x_min)), int(self.rewrap(real_x_max)), int(self.rewrap(real_y_min)), int(self.rewrap(real_y_max))
       return [real_x_min, real_x_max, real_y_min, real_y_max]
     
+    def predict_image(self, image, plot=False):
+        xmin = 0
+        xmax = 224
+        ymin = 0
+        ymax = 224
+
+        done = False
+        all_actions = []
+        self.actions_history = torch.ones((9,9))
+        state = self.compose_state(image)
+        original_coordinates = [xmin, xmax, ymin, ymax]
+        original_image = image.clone()
+        new_image = image
+        while not done:
+            action = self.select_action_model(state)
+            all_actions.append(action)
+            if action == 0:
+                next_state = None
+                new_equivalent_coord = self.calculate_position_box(all_actions)
+                done = True
+
+            else:
+                self.actions_history = self.update_history(action)
+                new_x_min, new_x_max, new_y_min, new_y_max = self.do_action(image, action,  xmin, xmax, ymin, ymax)
+                
+                new_coordinates = [new_x_min, new_x_max, new_y_min, new_y_max]
+                new_equivalent_coord = self.calculate_position_box(all_actions)
+                actual_equivalent_coord = self.calculate_position_box(all_actions[:-2])
+                
+                
+                new_image = original_image[:, int(new_equivalent_coord[2]):int(new_equivalent_coord[3]), int(new_equivalent_coord[0]):int(new_equivalent_coord[1])]
+                new_image = transform(new_image)
+                
+                
+                show_new_bdbox(original_image, new_equivalent_coord, color='b')
+                
+                
+                fig,ax = plt.subplots(1)
+                ax.imshow(new_image.transpose(0, 2).transpose(0, 1))
+                plt.show()
+                
+                
+                next_state = self.compose_state(new_image)
+                xmin, xmax, ymin, ymax = new_x_min, new_x_max, new_y_min, new_y_max
+            
+
+            # Move to the next state
+            state = next_state
+            actual_coordinates = new_coordinates
+            image = new_image
+
+
     def train(self, train_loader):
         xmin = 0
         xmax = 224

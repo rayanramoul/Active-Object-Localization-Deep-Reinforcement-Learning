@@ -1,3 +1,10 @@
+
+import matplotlib
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
+
+classes = ['cat', 'bird', 'motorbike', 'diningtable', 'train', 'tvmonitor', 'bus', 'horse', 'car', 'pottedplant', 'person', 'chair', 'boat', 'bottle', 'bicycle', 'dog', 'aeroplane', 'cow', 'sheep', 'sofa']
+
 def sort_class_extract(datasets):    
     datasets_per_class = {}
     for j in classes:
