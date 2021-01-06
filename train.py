@@ -34,10 +34,11 @@ train_loader2012, val_loader2012 = read_voc_dataset(download=LOAD, year='2012')
 train_loader2007, val_loader2007 = read_voc_dataset(download=LOAD, year='2007')
 
 # Done = ['cat', 'bird', 'motorbike', 'diningtable', 'train' ]
-classes = [ 'tvmonitor', 'bus', 'horse', 'car', 'pottedplant', 'person', 'chair', 'boat', 'bottle', 'bicycle', 'dog', 'aeroplane', 'cow', 'sheep', 'sofa']
+# Not done classes = [ 'tvmonitor', 'bus', 'horse', 'car', 'pottedplant', 'person', 'chair', 'boat', 'bottle', 'bicycle', 'dog', 'aeroplane', 'cow', 'sheep', 'sofa']
+classes = ['dog']
 
 agents_per_class = {}
 datasets_per_class = sort_class_extract([train_loader2007, train_loader2012])
 for key in classes:
-    agents_per_class[key] = Agent(key, alpha=0.2, num_episodes=15, load=False)
+    agents_per_class[key] = Agent(key, alpha=0.2, num_episodes=25, load=False)
     agents_per_class[key].train(datasets_per_class[key])

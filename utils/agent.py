@@ -26,6 +26,9 @@ import torch.optim as optim
 import cv2 as cv
 from torch.autograd import Variable
 
+from tqdm import tqdm
+
+
 try:
     if 'google.colab' in str(get_ipython()):
         from google.colab import drive
@@ -86,9 +89,9 @@ class ReplayMemory(object):
 
 
 class Agent():
-    def __init__(self, classe, alpha=0.2, nu=0.3, threshold=0.5, num_episodes=15, load=False ):
-        self.BATCH_SIZE = 32
-        self.GAMMA = 0.999
+    def __init__(self, classe, alpha=0.2, nu=3.0, threshold=0.5, num_episodes=15, load=False ):
+        self.BATCH_SIZE = 100
+        self.GAMMA = 0.900
         self.EPS = 1
         self.TARGET_UPDATE = 1
         self.save_path = SAVE_MODEL_PATH
@@ -101,10 +104,11 @@ class Agent():
             self.policy_net = DQN(screen_height, screen_width, self.n_actions)
         else:
             self.policy_net = self.load_network()
+            
         self.target_net = DQN(screen_height, screen_width, self.n_actions)
         self.target_net.load_state_dict(self.policy_net.state_dict())
         self.target_net.eval()
-        
+        self.feature_extractor.eval()
         if use_cuda:
           self.feature_extractor = self.feature_extractor.cuda()
           self.target_net = self.target_net.cuda()
@@ -130,6 +134,9 @@ class Agent():
         if not use_cuda:
             return torch.load(self.save_path+"_"+self.classe, map_location=torch.device('cpu'))
         return torch.load(self.save_path+"_"+self.classe)
+
+
+
 
     def intersection_over_union(self, box1, box2):
         # ymin, xmin, ymax, xmax = box
@@ -161,15 +168,19 @@ class Agent():
       
     def compute_trigger_reward(self, actual_state, ground_truth):
         res = self.intersection_over_union(actual_state, ground_truth)
-        if res>self.threshold:
-            return -self.nu
-        return self.nu
+        if res>=self.threshold:
+            return self.nu
+        return -1*self.nu
 
     def get_best_next_action(self, actions, ground_truth):
+        #print("BEST NEXT ACTION : ")
         max_reward = -99
-        best_action = -1
+        best_action = -99
+        positive_actions = []
+        negative_actions = []
         actual_equivalent_coord = self.calculate_position_box(actions)
         for i in range(0, 9):
+            #print("Action : "+str(i))
             copy_actions = actions.copy()
             copy_actions.append(i)
             new_equivalent_coord = self.calculate_position_box(copy_actions)
@@ -177,11 +188,17 @@ class Agent():
                 reward = self.compute_reward(new_equivalent_coord, actual_equivalent_coord, ground_truth)
             else:
                 reward = self.compute_trigger_reward(new_equivalent_coord,  ground_truth)
-            if reward>max_reward:
-                max_reward = reward
-                best_action = i
-
-        return best_action
+            
+            if reward>=0:
+                positive_actions.append(i)
+                    #print("Reward : "+str(reward))
+            else:
+                negative_actions.append(i)
+        #print("Positive actions : "+str(positive_actions))
+        #print("Negative actions : "+str(negative_actions))
+        if len(positive_actions)==0:
+            return random.choice(negative_actions)
+        return random.choice(positive_actions)
 
     def do_action(self, image, action, xmin=0, xmax=224, ymin=0, ymax=224):      
         r = action
@@ -237,12 +254,55 @@ class Agent():
                     inpu = Variable(state)
                 qval = self.policy_net(inpu)
                 _, predicted = torch.max(qval.data,1)
+                #print("Predicted : "+str(qval.data))
                 action = predicted[0] # + 1
-                try:
-                  return action.cpu().numpy()[0]
-                except:
-                  return action.cpu().numpy()
+                #print(action)
+                return action
 
+    def optimizeeeeeeeeeeeee_model(self):
+        if len(self.memory) < self.BATCH_SIZE:
+            return
+        transitions = self.memory.sample(self.BATCH_SIZE)
+        batch = Transition(*zip(*transitions))
+
+        non_final_mask = torch.Tensor(tuple(map(lambda s: s is not None, batch.next_state))).bool()
+        next_states = [s for s in batch.next_state if s is not None]
+        non_final_next_states = Variable(torch.cat(next_states), 
+                                         volatile=True).type(Tensor)
+        
+        state_batch = Variable(torch.cat(batch.state)).type(Tensor)
+        if use_cuda:
+            state_batch = state_batch.cuda()
+        action_batch = Variable(torch.LongTensor(batch.action).view(-1,1)).type(LongTensor)
+        reward_batch = Variable(torch.FloatTensor(batch.reward).view(-1,1)).type(Tensor)
+
+        # Compute Q(s_t, a) - the model computes Q(s_t), then we select the
+        # columns of actions taken
+        state_action_values = self.policy_net(state_batch).gather(1, action_batch)
+
+        # Compute V(s_{t+1}) for all next states.
+        next_state_values = Variable(torch.zeros(self.BATCH_SIZE, 1).type(Tensor)) 
+
+        if use_cuda:
+            non_final_next_states = non_final_next_states.cuda()
+        d = self.policy_net(non_final_next_states) # Eventually replace with policy_net
+        next_state_values[non_final_mask] = d.max(1)[0].view(-1,1)
+
+        # Now, we don't want to mess up the loss with a volatile flag, so let's
+        # clear it. After this, we'll just end up with a Variable that has
+        # requires_grad=False
+        next_state_values.volatile = False
+
+        # Compute the expected Q values
+        expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
+
+        # Compute  loss
+        loss = criterion(state_action_values, expected_state_action_values)
+
+        # Optimize the model
+        self.optimizer.zero_grad()
+        loss.backward()
+        self.optimizer.step()
 
     def optimize_model(self):
         if len(self.memory) < self.BATCH_SIZE:
@@ -293,6 +353,7 @@ class Agent():
     def compose_state(self, image, dtype=FloatTensor):
       image_feature = self.get_features(image, dtype)
       image_feature = image_feature.view(1,-1)
+      #print("image feature : "+str(image_feature.shape))
       history_flatten = self.actions_history.view(1,-1).type(dtype)
       state = torch.cat((image_feature, history_flatten), 1)
       return state
@@ -305,6 +366,7 @@ class Agent():
       if use_cuda:
           image = image.cuda()
       feature = self.feature_extractor(image)
+      #print("Feature shape : "+str(feature.shape))
       return feature.data
 
     
@@ -341,10 +403,21 @@ class Agent():
           real_y_min -= alpha_h
         if r == 8:
           real_y_max += alpha_h
-        real_x_min, real_x_max, real_y_min, real_y_max = int(self.rewrap(real_x_min)), int(self.rewrap(real_x_max)), int(self.rewrap(real_y_min)), int(self.rewrap(real_y_max))
+        real_x_min, real_x_max, real_y_min, real_y_max = self.rewrap(real_x_min), self.rewrap(real_x_max), self.rewrap(real_y_min), self.rewrap(real_y_max)
       return [real_x_min, real_x_max, real_y_min, real_y_max]
     
+    def get_max_bdbox(self, ground_truth_boxes, actual_coordinates ):
+        max_iou = 0.0
+        max_gt = []
+        for gt in ground_truth_boxes:
+            iou = self.intersection_over_union(actual_coordinates, gt)
+            if max_iou < iou:
+                max_iou = iou
+                max_gt = gt
+        return max_gt
+
     def predict_image(self, image, plot=False):
+        self.policy_net.eval()
         xmin = 0
         xmax = 224
         ymin = 0
@@ -354,12 +427,15 @@ class Agent():
         all_actions = []
         self.actions_history = torch.ones((9,9))
         state = self.compose_state(image)
-        original_coordinates = [xmin, xmax, ymin, ymax]
         original_image = image.clone()
         new_image = image
+
+        steps = 0
         while not done:
+            steps += 1
             action = self.select_action_model(state)
             all_actions.append(action)
+            #print("Action : "+str(action))
             if action == 0:
                 next_state = None
                 new_equivalent_coord = self.calculate_position_box(all_actions)
@@ -368,122 +444,116 @@ class Agent():
             else:
                 self.actions_history = self.update_history(action)
                 new_x_min, new_x_max, new_y_min, new_y_max = self.do_action(image, action,  xmin, xmax, ymin, ymax)
-                
-                new_coordinates = [new_x_min, new_x_max, new_y_min, new_y_max]
-                new_equivalent_coord = self.calculate_position_box(all_actions)
-                actual_equivalent_coord = self.calculate_position_box(all_actions[:-2])
-                
+                new_equivalent_coord = self.calculate_position_box(all_actions)            
                 
                 new_image = original_image[:, int(new_equivalent_coord[2]):int(new_equivalent_coord[3]), int(new_equivalent_coord[0]):int(new_equivalent_coord[1])]
-                new_image = transform(new_image)
-                
-                
-                show_new_bdbox(original_image, new_equivalent_coord, color='b')
-                
-                
-                fig,ax = plt.subplots(1)
-                ax.imshow(new_image.transpose(0, 2).transpose(0, 1))
-                plt.show()
-                
+                try:
+                    new_image = transform(new_image)
+                except ValueError:
+                    break            
                 
                 next_state = self.compose_state(new_image)
                 xmin, xmax, ymin, ymax = new_x_min, new_x_max, new_y_min, new_y_max
             
-
+            if steps == 40:
+                done = True
+            
             # Move to the next state
             state = next_state
-            actual_coordinates = new_coordinates
             image = new_image
+        
+        """
+        show_new_bdbox(original_image, new_equivalent_coord, color='b')
+        """
+        return new_equivalent_coord
 
+
+    
+    def evaluate(self, dataset):
+        ground_truth_boxes = []
+        predicted_boxes = []
+        print("Predicting boxes...")
+        for key, value in tqdm(dataset.items()):
+            image, gt_boxes = extract(key, dataset)
+            bbox = self.predict_image(image)
+            ground_truth_boxes.append(gt_boxes)
+            predicted_boxes.append(bbox)
+        print("Computing recall and ap...")
+        stats = eval_stats_at_threshold(predicted_boxes, ground_truth_boxes)
+        print("Final result : \n"+str(stats))
 
     def train(self, train_loader):
-        xmin = 0
-        xmax = 224
-        ymin = 0
-        ymax = 224
+        xmin = 0.0
+        xmax = 224.0
+        ymin = 0.0
+        ymax = 224.0
 
-        skipped = 0
-        treated = 0
-        for i_episode in range(self.num_episodes):
-            
-            for index in  range(len(train_loader)):
-                try:
-                    #clear_output()
-                    os.system('cls')
-                    print("Class : "+str(self.classe))
-                    print("EPS = "+str(self.EPS))
-                    print("\n\nEpisode : ("+str(i_episode)+"/"+str(self.num_episodes)+")")
-                    print("Image ("+str(index)+"/"+str(len(train_loader))+")")
-                    print("Treated "+str((treated/(treated+skipped+1))*100     )+"%")
-                    image, [oxmin, oxmax, oymin, oymax] = extract(index, train_loader)
-                    #image = image.transpose(0, 2).transpose(0, 1)
+        for i_episode in tqdm(range(self.num_episodes)):  
+            for key, value in  tqdm(train_loader.items()):
+                image, ground_truth_boxes = extract(key, train_loader)
+                original_image = image.clone()
+                ground_truth = ground_truth_boxes[0]
+                all_actions = []
+        
+                # Initialize the environment and state
+                self.actions_history = torch.ones((9,9))
+                state = self.compose_state(image)
+                original_coordinates = [xmin, xmax, ymin, ymax]
+                new_image = image
+                done = False
+                t = 0
+                actual_equivalent_coord = original_coordinates
+                new_equivalent_coord = original_coordinates
+                while not done:
+                    t += 1
+                    action = self.select_action(state, all_actions, ground_truth)
+                    all_actions.append(action)
+                    if action == 0:
+                        next_state = None
+                        new_equivalent_coord = self.calculate_position_box(all_actions)
+                        closest_gt = self.get_max_bdbox( ground_truth_boxes, new_equivalent_coord )
+                        reward = self.compute_trigger_reward(new_equivalent_coord,  closest_gt)
+                        done = True
 
-                    labels = [oxmin, oxmax, oymin, oymax]
-                    actual_coordinates = [xmin, xmax, ymin, ymax]
-                    original_image = image.clone()
-                    ground_truth = labels
-            
-                    all_actions = []
-            
-                    # Initialize the environment and state
-                    self.actions_history = torch.ones((9,9))
-                    state = self.compose_state(image)
-                    original_coordinates = [xmin, xmax, ymin, ymax]
-                    new_image = image
-                    done = False
-                    t = 0
-                    actual_coordinates = original_coordinates
-                    new_coordinates = original_coordinates
-                    treated += 1
-                    while not done:
-                        action = self.select_action(state, all_actions, ground_truth)
-                        all_actions.append(action)
-                        if action == 0:
-                            next_state = None
-                            new_equivalent_coord = self.calculate_position_box(all_actions)
-                            reward = self.compute_trigger_reward(new_equivalent_coord,  ground_truth)
-                            done = True
-
-                        else:
-                            self.actions_history = self.update_history(action)
-                            new_x_min, new_x_max, new_y_min, new_y_max = self.do_action(image, action,  xmin, xmax, ymin, ymax)
-                            
-                            new_coordinates = [new_x_min, new_x_max, new_y_min, new_y_max]
-                            new_equivalent_coord = self.calculate_position_box(all_actions)
-                            actual_equivalent_coord = self.calculate_position_box(all_actions[:-2])
-                            
-                            
-                            new_image = original_image[:, int(new_equivalent_coord[2]):int(new_equivalent_coord[3]), int(new_equivalent_coord[0]):int(new_equivalent_coord[1])]
+                    else:
+                        self.actions_history = self.update_history(action)
+                        new_x_min, new_x_max, new_y_min, new_y_max = self.do_action(image, action,  xmin, xmax, ymin, ymax)
+                        new_equivalent_coord = self.calculate_position_box(all_actions)
+                        
+                        new_image = original_image[:, int(new_equivalent_coord[2]):int(new_equivalent_coord[3]), int(new_equivalent_coord[0]):int(new_equivalent_coord[1])]
+                        try:
                             new_image = transform(new_image)
-                            
-                            """
+                        except ValueError:
+                            break                        
+                        if False:
                             show_new_bdbox(original_image, ground_truth, color='r')
                             show_new_bdbox(original_image, new_equivalent_coord, color='b')
                             
-                            
+                            """
                             fig,ax = plt.subplots(1)
                             ax.imshow(new_image.transpose(0, 2).transpose(0, 1))
                             plt.show()
                             """
-                            
-                            next_state = self.compose_state(new_image)
-                            reward = self.compute_reward(new_equivalent_coord, actual_equivalent_coord, ground_truth)
-                            xmin, xmax, ymin, ymax = new_x_min, new_x_max, new_y_min, new_y_max
                         
+                        next_state = self.compose_state(new_image)
+                        ground_truth = self.get_max_bdbox( ground_truth_boxes, new_equivalent_coord )
+                        reward = self.compute_reward(new_equivalent_coord, actual_equivalent_coord, closest_gt)
                         
-                        self.memory.push(state, int(action), next_state, reward)
+                        actual_equivalent_coord = new_equivalent_coord
+                    if t == 20:
+                        done = True
+                    self.memory.push(state, int(action), next_state, reward)
 
-                        # Move to the next state
-                        state = next_state
-                        actual_coordinates = new_coordinates
-                        image = new_image
-                        # Perform one step of the optimization (on the target network)
-                        self.optimize_model()
-                        
-                except ValueError:
-                    skipped += 1
+                    # Move to the next state
+                    state = next_state
+                    image = new_image
+                    # Perform one step of the optimization (on the target network)
+                    self.optimize_model()
+                    
+            
             if i_episode % self.TARGET_UPDATE == 0:
                 self.target_net.load_state_dict(self.policy_net.state_dict())
+            
             if i_episode<5:
                 self.EPS -= 0.18
             self.save_network()

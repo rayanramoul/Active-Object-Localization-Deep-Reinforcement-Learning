@@ -30,15 +30,15 @@ PATH="./datasets/"
 
 
 
-train_loader2012, val_loader2012 = read_voc_dataset(download=LOAD, year='2012')
-train_loader2007, val_loader2007 = read_voc_dataset(download=LOAD, year='2007')
+train_loader2012, val_loader2012 = read_voc_dataset(download=False, year='2012')
+train_loader2007, val_loader2007 = read_voc_dataset(download=False, year='2007')
 
 
 classes = ['cat', 'bird', 'motorbike', 'diningtable', 'train', 'tvmonitor', 'bus', 'horse', 'car', 'pottedplant', 'person', 'chair', 'boat', 'bottle', 'bicycle', 'dog', 'aeroplane', 'cow', 'sheep', 'sofa']
 
 agents_per_class = {}
 datasets_per_class = sort_class_extract([val_loader2007, val_loader2012])
-index = 10
-image, [oxmin, oxmax, oymin, oymax] = extract(index, datasets_per_class['cat'])
-agent = Agent('cat', alpha=0.02, num_episodes=25, load=True)
-agent.predict_image(image)
+classe = 'dog'
+index = random.choice(list(datasets_per_class[classe].keys()))
+agent = Agent(classe, alpha=0.2, num_episodes=25, load=True)
+agent.evaluate(datasets_per_class[classe])
