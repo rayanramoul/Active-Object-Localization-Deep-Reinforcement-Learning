@@ -26,8 +26,7 @@ import torch.optim as optim
 import cv2 as cv
 from torch.autograd import Variable
 
-from tqdm import tqdm
-
+from tqdm.notebook import tqdm
 
 try:
     if 'google.colab' in str(get_ipython()):
@@ -407,7 +406,7 @@ class Agent():
       return [real_x_min, real_x_max, real_y_min, real_y_max]
     
     def get_max_bdbox(self, ground_truth_boxes, actual_coordinates ):
-        max_iou = 0.0
+        max_iou = -20
         max_gt = []
         for gt in ground_truth_boxes:
             iou = self.intersection_over_union(actual_coordinates, gt)
@@ -517,7 +516,7 @@ class Agent():
 
                     else:
                         self.actions_history = self.update_history(action)
-                        new_x_min, new_x_max, new_y_min, new_y_max = self.do_action(image, action,  xmin, xmax, ymin, ymax)
+                        _, _, _, _ = self.do_action(image, action,  xmin, xmax, ymin, ymax)
                         new_equivalent_coord = self.calculate_position_box(all_actions)
                         
                         new_image = original_image[:, int(new_equivalent_coord[2]):int(new_equivalent_coord[3]), int(new_equivalent_coord[0]):int(new_equivalent_coord[1])]
@@ -536,7 +535,9 @@ class Agent():
                             """
                         
                         next_state = self.compose_state(new_image)
-                        ground_truth = self.get_max_bdbox( ground_truth_boxes, new_equivalent_coord )
+                        closest_gt = self.get_max_bdbox( ground_truth_boxes, new_equivalent_coord )
+                        print("GT BOXES : "+str(ground_truth_boxes))
+                        print("CLOSEST GT : "+str(closest_gt))
                         reward = self.compute_reward(new_equivalent_coord, actual_equivalent_coord, closest_gt)
                         
                         actual_equivalent_coord = new_equivalent_coord
