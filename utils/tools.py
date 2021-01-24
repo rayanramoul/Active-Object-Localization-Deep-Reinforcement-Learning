@@ -4,6 +4,8 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 import numpy as np
 import pandas as pd
+from config import *
+import random
 
 classes = ['cat', 'bird', 'motorbike', 'diningtable', 'train', 'tvmonitor', 'bus', 'horse', 'car', 'pottedplant', 'person', 'chair', 'boat', 'bottle', 'bicycle', 'dog', 'aeroplane', 'cow', 'sheep', 'sofa']
 
@@ -237,3 +239,22 @@ def eval_stats_at_threshold( all_bdbox, all_gt, thresholds=[0.1, 0.2, 0.3, 0.4, 
     stats_df = pd.DataFrame.from_records(stats)*100
     return stats_df
 
+class ReplayMemory(object):
+    
+    def __init__(self, capacity):
+        self.capacity = capacity
+        self.memory = []
+        self.position = 0
+
+    def push(self, *args):
+        """Saves a transition."""
+        if len(self.memory) < self.capacity:
+            self.memory.append(None)
+        self.memory[self.position] = Transition(*args)
+        self.position = (self.position + 1) % self.capacity
+
+    def sample(self, batch_size):
+        return random.sample(self.memory, batch_size)
+
+    def __len__(self):
+        return len(self.memory)

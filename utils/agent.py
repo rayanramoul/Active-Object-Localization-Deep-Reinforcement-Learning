@@ -16,10 +16,10 @@ import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
-import torchvision.transforms as transforms
+
 import torchvision.datasets as datasets
 
-from collections import namedtuple
+
 from itertools import count
 from PIL import Image
 import torch.optim as optim
@@ -27,64 +27,7 @@ import cv2 as cv
 from torch.autograd import Variable
 
 from tqdm.notebook import tqdm
-
-try:
-    if 'google.colab' in str(get_ipython()):
-        from google.colab import drive
-        drive.mount('/content/gdrive')
-        LOAD = True
-        SAVE_MODEL_PATH = '/content/gdrive/MyDrive/models/' + 'q_network'
-    else:
-        LOAD = False
-        SAVE_MODEL_PATH = "./models/q_network"
-except NameError:
-        LOAD = False
-        SAVE_MODEL_PATH = "./models/q_network"
-
-
-
-
-
-use_cuda = True
-FloatTensor = torch.cuda.FloatTensor if use_cuda else torch.FloatTensor
-LongTensor = torch.cuda.LongTensor if use_cuda else torch.LongTensor
-ByteTensor = torch.cuda.ByteTensor if use_cuda else torch.ByteTensor
-Tensor = FloatTensor
-if use_cuda:
-    criterion = nn.MSELoss().cuda()   
-else:
-    criterion = nn.MSELoss()
-
-Transition = namedtuple('Transition',
-                        ('state', 'action', 'next_state', 'reward'))
-
-transform = transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize((224,224)),
-            transforms.ToTensor(),
-           # transforms.Normalize((0.5, 0.5, 0.5),(0.5, 0.5, 0.5))  #  numbers here need to be adjusted in future
-])
-
-class ReplayMemory(object):
-    
-    def __init__(self, capacity):
-        self.capacity = capacity
-        self.memory = []
-        self.position = 0
-
-    def push(self, *args):
-        """Saves a transition."""
-        if len(self.memory) < self.capacity:
-            self.memory.append(None)
-        self.memory[self.position] = Transition(*args)
-        self.position = (self.position + 1) % self.capacity
-
-    def sample(self, batch_size):
-        return random.sample(self.memory, batch_size)
-
-    def __len__(self):
-        return len(self.memory)
-
+from config import *
 
 
 class Agent():
@@ -266,8 +209,8 @@ class Agent():
 
         non_final_mask = torch.Tensor(tuple(map(lambda s: s is not None, batch.next_state))).bool()
         next_states = [s for s in batch.next_state if s is not None]
-        non_final_next_states = Variable(torch.cat(next_states), 
-                                         volatile=True).type(Tensor)
+
+        non_final_next_states = Variable(torch.cat(next_states)).type(Tensor)
         
         state_batch = Variable(torch.cat(batch.state)).type(Tensor)
         if use_cuda:
@@ -290,7 +233,8 @@ class Agent():
         # Now, we don't want to mess up the loss with a volatile flag, so let's
         # clear it. After this, we'll just end up with a Variable that has
         # requires_grad=False
-        next_state_values.volatile = False
+        
+        # next_state_values.volatile = False
 
         # Compute the expected Q values
         expected_state_action_values = (next_state_values * self.GAMMA) + reward_batch
@@ -406,11 +350,11 @@ class Agent():
       return [real_x_min, real_x_max, real_y_min, real_y_max]
     
     def get_max_bdbox(self, ground_truth_boxes, actual_coordinates ):
-        max_iou = -20
+        max_iou = False
         max_gt = []
         for gt in ground_truth_boxes:
             iou = self.intersection_over_union(actual_coordinates, gt)
-            if max_iou < iou:
+            if max_iou == False or max_iou < iou:
                 max_iou = iou
                 max_gt = gt
         return max_gt
@@ -461,9 +405,9 @@ class Agent():
             state = next_state
             image = new_image
         
-        """
-        show_new_bdbox(original_image, new_equivalent_coord, color='b')
-        """
+            if plot:
+                show_new_bdbox(original_image, new_equivalent_coord, color='b')
+        
         return new_equivalent_coord
 
 
@@ -472,7 +416,7 @@ class Agent():
         ground_truth_boxes = []
         predicted_boxes = []
         print("Predicting boxes...")
-        for key, value in tqdm(dataset.items()):
+        for key, value in dataset.items():
             image, gt_boxes = extract(key, dataset)
             bbox = self.predict_image(image)
             ground_truth_boxes.append(gt_boxes)
@@ -480,6 +424,7 @@ class Agent():
         print("Computing recall and ap...")
         stats = eval_stats_at_threshold(predicted_boxes, ground_truth_boxes)
         print("Final result : \n"+str(stats))
+        return stats
 
     def train(self, train_loader):
         xmin = 0.0
@@ -487,8 +432,8 @@ class Agent():
         ymin = 0.0
         ymax = 224.0
 
-        for i_episode in tqdm(range(self.num_episodes)):  
-            for key, value in  tqdm(train_loader.items()):
+        for i_episode in range(self.num_episodes):  
+            for key, value in  train_loader.items():
                 image, ground_truth_boxes = extract(key, train_loader)
                 original_image = image.clone()
                 ground_truth = ground_truth_boxes[0]
@@ -536,8 +481,10 @@ class Agent():
                         
                         next_state = self.compose_state(new_image)
                         closest_gt = self.get_max_bdbox( ground_truth_boxes, new_equivalent_coord )
-                        print("GT BOXES : "+str(ground_truth_boxes))
-                        print("CLOSEST GT : "+str(closest_gt))
+                        """
+                        print("\n\nGT boxes"+str(ground_truth_boxes))
+                        print("Closest GT : "+str(closest_gt))
+                        """
                         reward = self.compute_reward(new_equivalent_coord, actual_equivalent_coord, closest_gt)
                         
                         actual_equivalent_coord = new_equivalent_coord
@@ -558,6 +505,89 @@ class Agent():
             if i_episode<5:
                 self.EPS -= 0.18
             self.save_network()
-            
 
+            print('Complete')
+    def train_validate(self, train_loader, valid_loader):
+        op = open("logs", "w")
+        op.write("NU = "+str(self.nu))
+        op.write("ALPHA = "+str(self.alpha))
+        op.write("THRESHOLD = "+str(self.threshold))
+        xmin = 0.0
+        xmax = 224.0
+        ymin = 0.0
+        ymax = 224.0
+        for i_episode in range(self.num_episodes):  
+            print("Episode "+str(i_episode))
+            for key, value in  train_loader.items():
+                image, ground_truth_boxes = extract(key, train_loader)
+                original_image = image.clone()
+                ground_truth = ground_truth_boxes[0]
+                all_actions = []
+        
+                # Initialize the environment and state
+                self.actions_history = torch.ones((9,9))
+                state = self.compose_state(image)
+                original_coordinates = [xmin, xmax, ymin, ymax]
+                new_image = image
+                done = False
+                t = 0
+                actual_equivalent_coord = original_coordinates
+                new_equivalent_coord = original_coordinates
+                while not done:
+                    t += 1
+                    action = self.select_action(state, all_actions, ground_truth)
+                    all_actions.append(action)
+                    if action == 0:
+                        next_state = None
+                        new_equivalent_coord = self.calculate_position_box(all_actions)
+                        closest_gt = self.get_max_bdbox( ground_truth_boxes, new_equivalent_coord )
+                        reward = self.compute_trigger_reward(new_equivalent_coord,  closest_gt)
+                        done = True
+
+                    else:
+                        self.actions_history = self.update_history(action)
+                        _, _, _, _ = self.do_action(image, action,  xmin, xmax, ymin, ymax)
+                        new_equivalent_coord = self.calculate_position_box(all_actions)
+                        
+                        new_image = original_image[:, int(new_equivalent_coord[2]):int(new_equivalent_coord[3]), int(new_equivalent_coord[0]):int(new_equivalent_coord[1])]
+                        try:
+                            new_image = transform(new_image)
+                        except ValueError:
+                            break                        
+                        if False:
+                            show_new_bdbox(original_image, ground_truth, color='r')
+                            show_new_bdbox(original_image, new_equivalent_coord, color='b')
+                            
+                            """
+                            fig,ax = plt.subplots(1)
+                            ax.imshow(new_image.transpose(0, 2).transpose(0, 1))
+                            plt.show()
+                            """
+                        
+                        next_state = self.compose_state(new_image)
+                        closest_gt = self.get_max_bdbox( ground_truth_boxes, new_equivalent_coord )
+                        reward = self.compute_reward(new_equivalent_coord, actual_equivalent_coord, closest_gt)
+                        
+                        actual_equivalent_coord = new_equivalent_coord
+                    if t == 20:
+                        done = True
+                    self.memory.push(state, int(action), next_state, reward)
+
+                    # Move to the next state
+                    state = next_state
+                    image = new_image
+                    # Perform one step of the optimization (on the target network)
+                    self.optimize_model()
+                    
+            stats = self.evaluate(valid_loader)
+            op.write("\n")
+            op.write("Episode "+str(i_episode))
+            op.write(str(stats))
+            if i_episode % self.TARGET_UPDATE == 0:
+                self.target_net.load_state_dict(self.policy_net.state_dict())
+            
+            if i_episode<5:
+                self.EPS -= 0.18
+            self.save_network()
+            
             print('Complete')

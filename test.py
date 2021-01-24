@@ -23,12 +23,6 @@ import os
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
 
-#!pip3 install torch==1.5.1 torchvision==0.6.1 -f https://download.pytorch.org/whl/cu92/torch_stable.html
-
-batch_size = 32
-PATH="./datasets/"
-
-
 
 train_loader2012, val_loader2012 = read_voc_dataset(download=False, year='2012')
 train_loader2007, val_loader2007 = read_voc_dataset(download=False, year='2007')
