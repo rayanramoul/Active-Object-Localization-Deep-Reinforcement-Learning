@@ -32,14 +32,14 @@ sofa : 297 elements.
 
 ## Examples of Output
 <p float="left">
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_1.gif" width="124" />
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_2.gif" width="124" /> 
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_3.gif" width="124" />
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_1.gif"  />
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_2.gif"  /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_3.gif" />
 </p>
 
 
 <p float="left">
-<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_4.gif" width="124" />
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_5.gif" width="124" /> 
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_6.gif" width="124" />
+<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_4.gif"  />
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_5.gif"  /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_6.gif" />
 </p>
