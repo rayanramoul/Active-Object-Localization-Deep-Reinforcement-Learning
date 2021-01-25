@@ -32,14 +32,28 @@ sofa : 297 elements.
 
 ## Examples of Output
 <p float="left">
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_0.gif" width="30%" />
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_1.gif" width="30%" /> 
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_2.gif" width="30%"/>
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_0.gif" width="33%" />
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_1.gif" width="33%" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_2.gif" width="33%"/>
 </p>
 
 
 <p float="left">
-<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_3.gif"  width="30%"/>
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_4.gif" width="30%" /> 
-  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_6.gif" width="30%" />
+<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_3.gif"  width="33%"/>
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_4.gif" width="33%" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_6.gif" width="33%" />
+</p>
+
+
+<p float="left">
+<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_7.gif"  width="33%"/>
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_8.gif" width="33%" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_10.gif" width="33%" />
+</p>
+
+
+<p float="left">
+<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_13.gif"  width="33%"/>
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_14.gif" width="33%" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_15.gif" width="33%" />
 </p>
