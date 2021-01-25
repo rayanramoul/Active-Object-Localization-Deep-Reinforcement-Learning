@@ -32,12 +32,12 @@ sofa : 297 elements.
 
 ## Examples of Output
 <p float="left">
-  <img src="media/movie_1.png" width="124" />
-  <img src="media/movie_2.png" width="124" /> 
-  <img src="media/movie_3.png" width="124" />
-<img src="media/movie_4.png" width="124" />
-  <img src="media/movie_5.png" width="124" /> 
-  <img src="media/movie_6.png" width="124" />
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_1.gif" width="124" />
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_2.png" width="124" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_3.png" width="124" />
+<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_4.png" width="124" />
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_5.png" width="124" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_6.png" width="124" />
 </p>
 </p>
 
