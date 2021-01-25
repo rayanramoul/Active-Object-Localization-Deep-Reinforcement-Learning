@@ -27,3 +27,17 @@ aeroplane : 432 elements.
 cow : 210 elements.
 sheep : 208 elements.
 sofa : 297 elements.
+
+
+
+## Examples of Output
+<p float="left">
+  <img src="media/movie_1.png" width="124" />
+  <img src="media/movie_2.png" width="124" /> 
+  <img src="media/movie_3.png" width="124" />
+<img src="media/movie_4.png" width="124" />
+  <img src="media/movie_5.png" width="124" /> 
+  <img src="media/movie_6.png" width="124" />
+</p>
+</p>
+

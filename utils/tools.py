@@ -42,7 +42,7 @@ def sort_class_extract(datasets):
     return datasets_per_class
 
 
-def show_new_bdbox(image, labels, color='r'):
+def show_new_bdbox(image, labels, color='r', count=0):
     xmin, xmax, ymin, ymax = labels[0],labels[1],labels[2],labels[3]
     fig,ax = plt.subplots(1)
     ax.imshow(image.transpose(0, 2).transpose(0, 1))
@@ -53,7 +53,10 @@ def show_new_bdbox(image, labels, color='r'):
 
     # Add the patch to the Axes
     ax.add_patch(rect)
-    plt.show()
+    ax.set_title("Iteration "+str(count))
+    plt.savefig(str(count)+'.png', dpi=100)
+    #plt.show()
+    
 
 def show_bdbox(train_loader, index):
     fig,ax = plt.subplots(1)

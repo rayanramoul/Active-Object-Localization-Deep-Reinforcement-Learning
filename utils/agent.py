@@ -2,7 +2,7 @@
 from utils.models import *
 from utils.tools import *
 import os
-
+import imageio
 import math
 import random
 import numpy as np
@@ -29,7 +29,8 @@ from torch.autograd import Variable
 from tqdm.notebook import tqdm
 from config import *
 
-
+import glob
+from PIL import Image
 class Agent():
     def __init__(self, classe, alpha=0.2, nu=3.0, threshold=0.5, num_episodes=15, load=False ):
         self.BATCH_SIZE = 100
@@ -406,8 +407,23 @@ class Agent():
             image = new_image
         
             if plot:
-                show_new_bdbox(original_image, new_equivalent_coord, color='b')
+                show_new_bdbox(original_image, new_equivalent_coord, color='b', count=steps)
         
+        if plot:
+            #images = []
+            tested = 0
+            while os.path.isfile('media/movie_'+str(tested)+'.gif'):
+                tested += 1
+            # filepaths
+            fp_out = "media/movie_"+str(tested)+".gif"
+            images = []
+            for count in range(1, steps+1):
+                images.append(imageio.imread(str(count)+".png"))
+            
+            imageio.mimsave(fp_out, images)
+            
+            for count in range(1, steps):
+                os.remove(str(count)+".png")
         return new_equivalent_coord
 
 
