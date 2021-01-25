@@ -6,27 +6,27 @@ Considering object localization problem as a markov decision process and making 
 
 
 ## Dataset and classes
-Number of training elements per class in VOC2007 + VOC2012
-cat : 648 elements.
-bird : 553 elements.       
-motorbike : 304 elements.  
-diningtable : 188 elements.
-train : 369 elements.      
-tvmonitor : 290 elements.  
-bus : 268 elements.        
-horse : 310 elements.      
-car : 659 elements.
-pottedplant : 202 elements.
-person : 1301 elements.
-chair : 379 elements.
-boat : 289 elements.
-bottle : 258 elements.
-bicycle : 303 elements.
-dog : 750 elements.
-aeroplane : 432 elements.
-cow : 210 elements.
-sheep : 208 elements.
-sofa : 297 elements.
+Number of training elements per class in VOC2007 + VOC2012 <br>
+cat : 648 elements.<br>
+bird : 553 elements.       <br>
+motorbike : 304 elements.  <br>
+diningtable : 188 elements.<br>
+train : 369 elements.      <br>
+tvmonitor : 290 elements.  <br>
+bus : 268 elements.        <br>
+horse : 310 elements.      <br>
+car : 659 elements.<br>
+pottedplant : 202 elements.<br>
+person : 1301 elements.<br>
+chair : 379 elements.<br>
+boat : 289 elements.<br>
+bottle : 258 elements.<br>
+bicycle : 303 elements.<br>
+dog : 750 elements.<br>
+aeroplane : 432 elements.<br>
+cow : 210 elements.<br>
+sheep : 208 elements.<br>
+sofa : 297 elements.<br>
 
 
 
@@ -57,3 +57,26 @@ sofa : 297 elements.
   <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_14.gif" width="32%" /> 
   <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_15.gif" width="32%" />
 </p>
+
+
+<p float="left">
+<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_17.gif"  width="32%"/>
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_18.gif" width="32%" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_19.gif" width="32%" />
+</p>
+
+
+
+<p float="left">
+<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_20.gif"  width="32%"/>
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_21.gif" width="32%" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_22.gif" width="32%" />
+</p>
+
+
+<p float="left">
+<img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_24.gif"  width="32%"/>
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_25.gif" width="32%" /> 
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/movie_26.gif" width="32%" />
+</p>
+
