@@ -1,7 +1,13 @@
 # Active Object-Localization using Deep Reinforcement Learning
 Considering object localization problem as a markov decision process and making an agent learn to maximize its reward on it.
+Implementation based on paper : Caicedo, Juan  Lazebnik, Svetlana. (2015).”Active Object Localization with Deep Rein-forcement Learning”. 10.1109/ICCV.2015.286, <a href="https://arxiv.org/abs/1511.06015#:~:text=We%20present%20an%20active%20detection%20model%20for%20localizing%20objects%20in%20scenes.&text=This%20agent%20learns%20to%20deform,objects%20following%20top-down%20reasoning.">arxiv</a>
 
-# Training 
+# Training results
+
+<p float="left">
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/ap_over_epochs.png" width="49%" />
+  <img src="https://github.com/raysr/Active-Object-Localization-Deep-Reinforcement-Learning/blob/master/media/recall_over_epochs.png" width="49%" /> 
+</p>
 
 
 
