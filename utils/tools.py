@@ -220,14 +220,10 @@ def prec_rec_compute(bounding_boxes, gt_boxes, ovthresh):
 
 def compute_ap_and_recall(all_bdbox, all_gt, ovthresh):
     """
-    Compute VOC detection metrics. The code was adapted from detectron2 repo
+        Calcul de la VOC detection metrique. 
     """
     prec, rec = prec_rec_compute(all_bdbox, all_gt, ovthresh)
     ap = voc_ap(rec, prec, False)
-    """
-    print("AP : "+str(ap))
-    print("rec : "+str(rec))
-    """
     return ap, rec[-1]
 
 
@@ -242,6 +238,10 @@ def eval_stats_at_threshold( all_bdbox, all_gt, thresholds=[0.1, 0.2, 0.3, 0.4, 
     stats_df = pd.DataFrame.from_records(stats)*100
     return stats_df
 
+
+"""
+    Structure de données pour stocker les éléments de mémoire pour l'algorithme de Replay Memory.
+"""
 class ReplayMemory(object):
     
     def __init__(self, capacity):

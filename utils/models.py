@@ -1,21 +1,24 @@
 import torch.nn as nn
 import torchvision
 
+
+"""
+    Modèle d'extraction de caractéristiques, ici en faisant appel à VGG-16.
+"""
 class FeatureExtractor(nn.Module):
     def __init__(self):
         super(FeatureExtractor, self).__init__() # recopier toute la partie convolutionnelle
         vgg16 = torchvision.models.vgg16(pretrained=True)
         vgg16.eval() # to not do dropout
         self.features = list(vgg16.children())[0] 
-        # understand feature and classifier: https://www.kaggle.com/carloalbertobarbano/vgg16-transfer-learning-pytorch
-        # garder une partie du classifieur, -2 pour s'arrêter à relu7
         self.classifier = nn.Sequential(*list(vgg16.classifier.children())[:-2])
     def forward(self, x):
         x = self.features(x)
-        #x = x.view(x.size(0), -1)
-        #x = self.classifier(x)
         return x
     
+"""
+    Architecture du Q-Network comme décrite dans l'article.
+"""
 class DQN(nn.Module):
     def __init__(self, h, w, outputs):
         super(DQN, self).__init__()
@@ -28,7 +31,5 @@ class DQN(nn.Module):
             nn.Dropout(0.2),
             nn.Linear( in_features= 1024, out_features=9)
         )
-    # Called with either one element to determine next action, or a batch
-    # during optimization. Returns tensor([[left0exp,right0exp]...]).
     def forward(self, x):
         return self.classifier(x)

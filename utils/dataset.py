@@ -7,29 +7,18 @@ PATH="./datasets/"
 
 
 class CustomRotation(object):
+    """
+        Fournit une classe trnaform qui remet les images dans la bonne orientation ( car mal orientées orignellement dans le jeu de données )
+    """
     def __call__(self, image):
         return image.transpose(0, 2).transpose(0, 1)
 
 
-class NoisySBDataset():
-    def __init__(self, path, image_set="train", transforms = None, download=True):
-        super().__init__()
-        self.transforms = transforms
-        self.dataset = torchvision.datasets.SBDataset(root=path,
-                                                      image_set=image_set,
-                                                      download=download)
-
-    def __len__(self):
-        return len(self.dataset)
-
-    def __getitem__(self, idx):  # a[x] for calling a.__getitem__(x)
-        img, truth = self.dataset[idx]
-        if self.transforms:
-            img = self.transforms(img)
-        return (img, truth)
-
 
 def get_transform(train):
+    """
+        Permettant la préparation d'une fonction normalisation + le redimensionnement des images du jeu de données.
+    """
     base_size = 520
     crop_size = 480
 
@@ -64,6 +53,10 @@ def make_image_transform(image_transform_params: dict,
 
 
 def read_voc_dataset(download=True, year='2007'):
+    """
+        Fonction qui récupére les dataloaders de validation et de train du jeu de données PASCAL VOC selon l'année d'entrée
+
+    """
     T = transforms.Compose([
                             transforms.Resize((224, 224)),
                             transforms.ToTensor(),
@@ -78,14 +71,38 @@ def read_voc_dataset(download=True, year='2007'):
     val_loader = DataLoader(voc_val,shuffle=False)
 
     return voc_data, voc_val
-    #return train_loader, val_loader
 
 def get_images_labels(dataloader):
+    """
+        Récupére séparemment les images et labels du dataloader
+    """
     data_iter = iter(dataloader)
     images, labels = next(data_iter)
     return images, labels
 
+
+
+class NoisySBDataset():
+    def __init__(self, path, image_set="train", transforms = None, download=True):
+        super().__init__()
+        self.transforms = transforms
+        self.dataset = torchvision.datasets.SBDataset(root=path,
+                                                      image_set=image_set,
+                                                      download=download)
+    def __len__(self):
+        return len(self.dataset)
+
+    def __getitem__(self, idx):  # a[x] for calling a.__getitem__(x)
+        img, truth = self.dataset[idx]
+        if self.transforms:
+            img = self.transforms(img)
+        return (img, truth)
+
+
 def read_sbd_dataset(batch_size, download=True):
+    """
+        Lecture et normalisation du jeu de données SB.
+    """
     T = transforms.Compose([
                             transforms.Resize((224, 224)),
                             transforms.ToTensor()
