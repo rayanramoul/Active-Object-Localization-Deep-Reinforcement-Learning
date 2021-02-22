@@ -619,12 +619,7 @@ class Agent():
                             show_new_bdbox(original_image, ground_truth, color='r')
                             show_new_bdbox(original_image, new_equivalent_coord, color='b')
                             
-                            """
-                            fig,ax = plt.subplots(1)
-                            ax.imshow(new_image.transpose(0, 2).transpose(0, 1))
-                            plt.show()
-                            """
-                        
+
                         next_state = self.compose_state(new_image)
                         closest_gt = self.get_max_bdbox( ground_truth_boxes, new_equivalent_coord )
                         reward = self.compute_reward(new_equivalent_coord, actual_equivalent_coord, closest_gt)
@@ -634,10 +629,10 @@ class Agent():
                         done = True
                     self.memory.push(state, int(action), next_state, reward)
 
-                    # Move to the next state
+                    # Vers le nouvel état
                     state = next_state
                     image = new_image
-                    # Perform one step of the optimization (on the target network)
+                    # Optimisation
                     self.optimize_model()
                     
             stats = self.evaluate(valid_loader)
