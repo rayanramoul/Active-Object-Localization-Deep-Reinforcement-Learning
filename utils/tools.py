@@ -164,7 +164,7 @@ def compute_ap_and_recall(all_bdbox, all_gt, ovthresh):
 
 def eval_stats_at_threshold( all_bdbox, all_gt, thresholds=[0.1, 0.2, 0.3, 0.4, 0.5]):
     """
-    Evaluate average precision and recall for different intersection values
+        Evaluation et collecte des statistiques et ce pour différents seuils.
     """
     stats = {}
     for ovthresh in thresholds:
