@@ -32,7 +32,6 @@ class Agent():
     def __init__(self, classe, alpha=0.2, nu=3.0, threshold=0.5, num_episodes=15, load=False ):
         """
             Classe initialisant l'ensemble des paramètres de l'apprentissage, un agent est associé à une classe donnée du jeu de données.
-
         """
         self.BATCH_SIZE = 100
         self.GAMMA = 0.900
@@ -200,8 +199,8 @@ class Agent():
                 except:
                   return action.cpu().numpy()
         else:
-          #return np.random.randint(0,9)
-            return self.get_best_next_action(actions, ground_truth)
+            #return np.random.randint(0,9)   # Avant implémentation d'agent expert
+            return self.get_best_next_action(actions, ground_truth) # Appel à l'agent expert.
 
     def select_action_model(self, state):
         """
@@ -398,7 +397,6 @@ class Agent():
                 - Image redimensionnée.
             Sortie :
                 - Coordonnées boite englobante.
-
         """
 
         # Passage du Q-Network en mode évaluation
@@ -570,9 +568,9 @@ class Agent():
 
     def train_validate(self, train_loader, valid_loader):
         """
-            Entraînement du modèle et à chaque épisode test de l'efficacité sur le jeu de test.
+            Entraînement du modèle et à chaque épisode test de l'efficacité sur le jeu de test et sauvegarde des résultats dans un fichier de logs.
         """
-        op = open("logs", "w")
+        op = open("logs_over_epochs", "w")
         op.write("NU = "+str(self.nu))
         op.write("ALPHA = "+str(self.alpha))
         op.write("THRESHOLD = "+str(self.threshold))

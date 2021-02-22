@@ -82,6 +82,9 @@ def get_images_labels(dataloader):
 
 
 
+"""
+Fonctions permettant la récupération et lecture du jeu de données SB de Pytorch
+"""
 class NoisySBDataset():
     def __init__(self, path, image_set="train", transforms = None, download=True):
         super().__init__()

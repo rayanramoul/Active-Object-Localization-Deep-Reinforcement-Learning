@@ -10,6 +10,14 @@ import random
 classes = ['cat', 'bird', 'motorbike', 'diningtable', 'train', 'tvmonitor', 'bus', 'horse', 'car', 'pottedplant', 'person', 'chair', 'boat', 'bottle', 'bicycle', 'dog', 'aeroplane', 'cow', 'sheep', 'sofa']
 
 def sort_class_extract(datasets):    
+    """
+        Permet le tri par classes d'un jeu de données, parcours l'ensemble des objets d'une image et si il trouve un objet d'une classe
+        il l'ajoute au jeu de données de celle-ci. 
+        Entrée :
+            - Jeu de données. 
+        Sortie :
+            - Dictionnaire de jeu de données. ( clés : Classes, valeurs : Toutes les données de cette classe )
+    """
     datasets_per_class = {}
     for j in classes:
         datasets_per_class[j] = {}
@@ -17,10 +25,6 @@ def sort_class_extract(datasets):
     for dataset in datasets:
         for i in dataset:
             img, target = i
-            '''
-            print("ANNOTATION : ")
-            print(target['annotation'])
-            '''
             classe = target['annotation']['object'][0]["name"]
             filename = target['annotation']['filename']
 
@@ -43,6 +47,9 @@ def sort_class_extract(datasets):
 
 
 def show_new_bdbox(image, labels, color='r', count=0):
+    """
+        Fonction pour la visualisation des boites englobantes directement sur l'image.
+    """
     xmin, xmax, ymin, ymax = labels[0],labels[1],labels[2],labels[3]
     fig,ax = plt.subplots(1)
     ax.imshow(image.transpose(0, 2).transpose(0, 1))
@@ -50,41 +57,18 @@ def show_new_bdbox(image, labels, color='r', count=0):
     width = xmax-xmin
     height = ymax-ymin
     rect = patches.Rectangle((xmin,ymin),width,height,linewidth=3,edgecolor=color,facecolor='none')
-
-    # Add the patch to the Axes
     ax.add_patch(rect)
     ax.set_title("Iteration "+str(count))
     plt.savefig(str(count)+'.png', dpi=100)
-    #plt.show()
-    
 
-def show_bdbox(train_loader, index):
-    fig,ax = plt.subplots(1)
-    img, target = train_loader[index]
-    ax.imshow(img.transpose(0, 2).transpose(0, 1))
-    #print("Labels : "+str(labels['annotation']['size']))
-    
-    print(img)
-    print(target)
-    xmin = ( int(target['annotation']['object'][0]['bndbox']['xmin']) /  int(target['annotation']['size']['width']) ) * 224
-    xmax = ( int(target['annotation']['object'][0]['bndbox']['xmax']) /  int(target['annotation']['size']['width']) ) * 224
-
-    ymin = ( int(target['annotation']['object'][0]['bndbox']['ymin']) /  int(target['annotation']['size']['height']) ) * 224
-    ymax = ( int(target['annotation']['object'][0]['bndbox']['ymax']) /  int(target['annotation']['size']['height']) ) * 224
-    
-    width = xmax-xmin
-    height = ymax-ymin
-    rect = patches.Rectangle((xmin,ymin),width,height,linewidth=3,edgecolor='r',facecolor='none')
-
-    # Add the patch to the Axes
-    ax.add_patch(rect)
-    plt.show()
 
 def extract(index, loader):
+    """
+        A partir du dataloader extrait ( et sépare ) les images et les boites englobantes vérité terrain
+        et adaptent les coordonnées par rapport aux nouvelles tailles d'images.
+    """
     extracted = loader[index]
     ground_truth_boxes =[]
-    if len(extracted)>1:
-        print("SIZE : "+str(len(extracted)))
     for ex in extracted:
         img = ex[0]
         bndbox = ex[1][0]
@@ -101,12 +85,11 @@ def extract(index, loader):
 
 
 
-def voc_ap(rec, prec, use_07_metric=False):
-    """Compute VOC AP given precision and recall. If use_07_metric is true, uses
-    the VOC 07 11-point method (default:False).
+def voc_ap(rec, prec, voc2007=False):
     """
-    if use_07_metric:
-        # 11 point metric
+        Calcul de l'AP et du Recall. Si voc2007 est vraie on utilise alors la mesure préconisé par le papier de PASCAL VOC 2007 ( méthode des 11 points )
+    """
+    if voc2007:
         ap = 0.0
         for t in np.arange(0.0, 1.1, 0.1):
             if np.sum(rec >= t) == 0:
@@ -115,76 +98,30 @@ def voc_ap(rec, prec, use_07_metric=False):
                 p = np.max(prec[rec >= t])
             ap = ap + p / 11.0
     else:
-        # correct AP calculation
-        # first append sentinel values at the end
         mrec = np.concatenate(([0.0], rec, [1.0]))
         mpre = np.concatenate(([0.0], prec, [0.0]))
 
-        # compute the precision envelope
         for i in range(mpre.size - 1, 0, -1):
             mpre[i - 1] = np.maximum(mpre[i - 1], mpre[i])
 
-        # to calculate area under PR curve, look for points
-        # where X axis (recall) changes value
         i = np.where(mrec[1:] != mrec[:-1])[0]
-
-        # and sum (\Delta recall) * prec
         ap = np.sum((mrec[i + 1] - mrec[i]) * mpre[i + 1])
     return ap
 
 
-def prec_rec_prepare(all_detected, all_gt):
-    # Read GT objects
-    class_recs = {}
-    npos = 0
-    c1 = 0
-    c2 = 0
-    for imname, bbox in all_gt_dogs.items():
-        difficult = np.array([False]*len(bbox))
-        det = np.array([False]*len(bbox))
-        npos = npos + sum(~difficult)
-        #print("GT bbox : "+str(bbox))
-        class_recs[imname] = {
-                "bbox": bbox, "difficult": difficult, "det": det}
-        
-        c1 += 1
-    # Read detections
-    image_ids = []
-    confidence = []
-    BB = {}
-    for imname, detected_ones in all_detected.items():
-        for detected in detected_ones:
-            box, score = np.array_split(detected, [4])
-            #print("Detected dogs : "+str(box)+" || "+str(score))
-            BB[imname] = box
-            #BB.append(box)
-            confidence.append(score)
-            image_ids.append(imname)
-            c2 += 1
-    confidence = np.hstack(confidence)
-    #BB = np.vstack(BB)
-
-    
-    image_ids=0
-    return image_ids, class_recs, BB, npos
-
-
 def prec_rec_compute(bounding_boxes, gt_boxes, ovthresh):
-    # go down dets and mark TPs and FPs
-    #nd = len(image_ids)
+    """
+        Calcul de précision et recall grâce à l'Intersection/Union et selon le threshold entre les vérités terrains et les prédictions.
+    """
     nd = len(bounding_boxes)
     npos = nd
     tp = np.zeros(nd)
     fp = np.zeros(nd)
-    #for d in range(nd):
     d = 0
 
     for index in range(len(bounding_boxes)):
-        #R = class_recs[image_ids[d]]
         box1 = bounding_boxes[index]
         box2 = gt_boxes[index][0]
-        #print("Box1 : "+str(box1))
-        #print("Box2 : "+str(box2))
         x11, x21, y11, y21 = box1[0], box1[1], box1[2], box1[3]
         x12, x22, y12, y22 = box2[0], box2[1], box2[2], box2[3]
         
@@ -193,11 +130,11 @@ def prec_rec_compute(bounding_boxes, gt_boxes, ovthresh):
         yi2 = min(y21, y22)
         xi2 = min(x21, x22)
         inter_area = max(((xi2 - xi1) * (yi2 - yi1)), 0)
-        # Calculate the Union area by using Formula: Union(A,B) = A + B - Inter(A,B)
+        #  Union(A,B) = A + B - Inter(A,B)
         box1_area = (x21 - x11) * (y21 - y11)
         box2_area = (x22 - x12) * (y22 - y12)
         union_area = box1_area + box2_area - inter_area
-        # compute the IoU
+        # Calcul de IOU
         iou = inter_area / union_area
 
         if iou > ovthresh:
@@ -207,12 +144,10 @@ def prec_rec_compute(bounding_boxes, gt_boxes, ovthresh):
         d += 1
         
     
-    # compute precision recall
+    # Calcul de la précision et du recall
     fp = np.cumsum(fp)
     tp = np.cumsum(tp)
     rec = tp / float(npos)
-    # avoid divide by zero in case the first detection matches a difficult
-    # ground truth
     prec = tp / np.maximum(tp + fp, np.finfo(np.float64).eps)
     
     return prec, rec
